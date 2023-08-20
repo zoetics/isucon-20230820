@@ -16,26 +16,6 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `player_score`
---
-
-DROP TABLE IF EXISTS `player_score`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `player_score` (
-  `id` varchar(255) NOT NULL,
-  `tenant_id` bigint NOT NULL,
-  `player_id` varchar(255) NOT NULL,
-  `competition_id` varchar(255) NOT NULL,
-  `score` bigint NOT NULL,
-  `row_num` bigint NOT NULL,
-  `created_at` bigint NOT NULL,
-  `updated_at` bigint NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Dumping data for table `player_score`
 --
 
@@ -46,24 +26,6 @@ INSERT INTO `player_score` VALUES ('1004ccb57',1,'1e9066e2','4447b4e1',48000,115
 UNLOCK TABLES;
 
 --
--- Table structure for table `competition`
---
-
-DROP TABLE IF EXISTS `competition`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `competition` (
-  `id` varchar(255) NOT NULL,
-  `tenant_id` bigint NOT NULL,
-  `title` text NOT NULL,
-  `finished_at` bigint DEFAULT NULL,
-  `created_at` bigint NOT NULL,
-  `updated_at` bigint NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Dumping data for table `competition`
 --
 
@@ -72,24 +34,6 @@ LOCK TABLES `competition` WRITE;
 INSERT INTO `competition` VALUES ('174f069ca',1,'第3回 隠れ家的サーバ都市',1653340832,1651988888,1653340832),('1a0205203',1,'すべからくサーバ乃月杯',NULL,1652061344,1652215777),('2aa8fb7c9',1,'第1回 最速のみたらし理論',1652980818,1652508348,1652980818),('2b9509304',1,'ルービックキューブの5秒前 vol.2',1653644172,1652533100,1653644172),('31a456f7b',1,'第7回 本番ネットワークざんまい',1653695246,1652695766,1653695246),('34433d77a',1,'第2回 -rfハックマニア',NULL,1652766115,1653839788),('37ee070b2',1,'THEパブ爆弾杯',1654007809,1652864554,1654007809),('3cb2f0c1d',1,'エビ部 #0',1653011899,1652992576,1653011899),('4447b4e1',1,'海の鎌倉大学 vol.2',NULL,1651477755,1652932788),('4464b772a',1,'究極のカニ醸造 #1',1653614467,1653199122,1653614467),('45c0c2910',1,'アワビ醸造 vol.4',1653238212,1653235617,1653238212),('4ce9b66c7',1,'100日後にカスタード人生カップ',NULL,1653427816,1653998497),('530909c23',1,'チーズ学園',1653759854,1653592162,1653759854),('547f03113',1,'イスドリブンカップ',NULL,1653631376,1653711841),('585aacdf5',1,'やわやわ川崎は命より重い大会',1653803219,1653734940,1653803219),('597488a14',1,'当たる桜木町だらけ大会',NULL,1653764495,1653980588),('59cb9aad2',1,'ラズベリー研究所 vol.2',NULL,1653773625,1653944017),('5d5e808a3',1,'インターナショナルみかんネイティブ杯',1654014231,1653869559,1654014231),('6396ba682',1,'待ってエラー荘 vol.7',NULL,1654036516,1654041198),('e018c687',1,'クイ方式 vol.1',NULL,1651739172,1653187008);
 /*!40000 ALTER TABLE `competition` ENABLE KEYS */;
 UNLOCK TABLES;
-
---
--- Table structure for table `player`
---
-
-DROP TABLE IF EXISTS `player`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `player` (
-  `id` varchar(255) NOT NULL,
-  `tenant_id` bigint NOT NULL,
-  `display_name` text NOT NULL,
-  `is_disqualified` tinyint(1) NOT NULL,
-  `created_at` bigint NOT NULL,
-  `updated_at` bigint NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Dumping data for table `player`
