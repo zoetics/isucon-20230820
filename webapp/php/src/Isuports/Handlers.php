@@ -242,7 +242,7 @@ class Handlers
     {
         $idStr = '';
         foreach ($ids as $id) {
-            $if($idStr === '') {
+            if($idStr === '') {
                 $idStr = $id;
             }
             $idStr = $idStr . ', ' . $id;
