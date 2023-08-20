@@ -1017,53 +1017,38 @@ class Handlers
         // player_scoreを読んでいるときに更新が走ると不整合が起こるのでロックを取得する
         $fl = $this->flockByTenantID($v->tenantID);
 
-        $pss = $tenantDB->prepare('SELECT * FROM player_score WHERE tenant_id = ? AND competition_id = ? ORDER BY row_num DESC')
-            ->executeQuery([$tenant['id'], $competitionID])
+        $pss = $tenantDB->prepare(
+            'SELECT ps.score AS score, ps.player_id AS player_id, p.display_name AS display_name FROM player_score ps INNER JOIN player p ON ps.player_id = p.id WHERE ps.competition_id = ? GROUP BY ps.player_id ORDER BY ps.score DESC')
+            ->executeQuery([$competitionID])
             ->fetchAllAssociative();
+
+        $tenantDB->close();
+        fclose($fl);
 
         /** @var list<CompetitionRank> $ranks */
         $ranks = [];
+        $i = 0;
         /** @var array<string, null> $scoredPlayerSet */
         $scoredPlayerSet = [];
-        $playerIds = array_column($pss, 'player_id');
-        $players = $this->retrievePlayers($playerIds);
-        foreach ($pss as $ps) {
+        foreach ($pss as $i => $ps) {
+            if ($i < $rankAfter) {
+                continue;
+            }
+
             // player_scoreが同一player_id内ではrow_numの降順でソートされているので
             // 現れたのが2回目以降のplayer_idはより大きいrow_numでスコアが出ているとみなせる
             if (array_key_exists($ps['player_id'], $scoredPlayerSet)) {
                 continue;
             }
             $scoredPlayerSet[$ps['player_id']] = null;
-            $p = $players[$ps['player_id']];
 
             $ranks[] = new CompetitionRank(
-                score: $ps['score'],
-                playerID: $p->id,
-                playerDisplayName: $p->displayName,
-                rowNum: $ps['row_num'],
-            );
-        }
-        usort($ranks, function (CompetitionRank $x, CompetitionRank $y): int {
-            if ($x->score === $y->score) {
-                return $x->rowNum <=> $y->rowNum;
-            }
-
-            return $y->score <=> $x->score;
-        });
-
-        /** @var list<CompetitionRank> $pageRanks */
-        $pageRanks = [];
-        foreach ($ranks as $i => $rank) {
-            if ($i < $rankAfter) {
-                continue;
-            }
-            $pageRanks[] = new CompetitionRank(
                 rank: $i + 1,
-                score: $rank->score,
-                playerID: $rank->playerID,
-                playerDisplayName: $rank->playerDisplayName,
+                score: $ps['score'],
+                playerID: $ps['player_id'],
+                playerDisplayName: $ps['display_name'],
             );
-            if (count($pageRanks) >= 100) {
+            if (count($ranks) >= 100) {
                 break;
             }
         }
@@ -1076,12 +1061,9 @@ class Handlers
                     title: $competition->title,
                     isFinished: !is_null($competition->finishedAt),
                 ),
-                ranks: $pageRanks,
+                ranks: $ranks,
             ),
         );
-
-        $tenantDB->close();
-        fclose($fl);
 
         return $this->jsonResponse($response, $res);
     }
