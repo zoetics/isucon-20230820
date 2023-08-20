@@ -189,7 +189,7 @@ class Handlers
         // SaaS管理者用ドメイン
         if ($tenantName === 'admin') {
             return new TenantRow(
-                name:'admin',
+                name: 'admin',
                 displayName: 'admin'
             );
         }
@@ -368,9 +368,11 @@ class Handlers
 
     /**
      * 大会ごとの課金レポートを計算する
+     * MEMO: とても重そうな関数
      */
     private function billingReportByCompetition(Connection $tenantDB, int $tenantID, string $competitionID): BillingReport
     {
+        // MEMO: 大会を取得するSELECTをしてる（N+1)
         $comp = $this->retrieveCompetition($tenantDB, $competitionID);
         if (is_null($comp)) {
             throw new RuntimeException('error retrieveCompetition');
@@ -475,11 +477,13 @@ class Handlers
             );
 
             $tenantDB = $this->connectToTenantDB($t['id']);
+            // テナントごとにcompetitionテーブルを取得（N+1）
             $cs = $tenantDB->prepare('SELECT * FROM competition WHERE tenant_id=?')
                 ->executeQuery([$t['id']])
                 ->fetchAllAssociative();
 
             foreach ($cs as $comp) {
+                // MEMO: 大会ごとのスコアを計算する処理が重い（N+1)
                 $report = $this->billingReportByCompetition($tenantDB, $t['id'], $comp['id']);
                 $tb->billingYen += $report->billingYen;
             }
@@ -502,7 +506,7 @@ class Handlers
     }
 
     /**
-     * テナント管理者向けAPI
+     * 主催者向けAPI
      * GET /api/organizer/players
      * 参加者一覧を返す
      */
@@ -538,7 +542,7 @@ class Handlers
     }
 
     /**
-     * テナント管理者向けAPI
+     * 主催者者向けAPI
      * POST /api/organizer/players/add
      * テナントに参加者を追加する
      */
@@ -561,13 +565,16 @@ class Handlers
 
         /** @var list<PlayerDetail> $pds */
         $pds = [];
+        // MEMO: ここN+1で参加者を追加・取得
         foreach ($displayNames as $displayName) {
             $id = $this->dispenseID();
 
             $now = time();
+            // MEMO: 追加
             $tenantDB->prepare('INSERT INTO player (id, tenant_id, display_name, is_disqualified, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)')
                 ->executeStatement([$id, $v->tenantID, $displayName, false, $now, $now]);
 
+            // MEMO: 取得
             $p = $this->retrievePlayer($tenantDB, $id);
 
             $pds[] = new PlayerDetail(
@@ -585,7 +592,7 @@ class Handlers
     }
 
     /**
-     * テナント管理者向けAPI
+     * 主催者向けAPI
      * POST /api/organizer/player/:player_id/disqualified
      * 参加者を失格にする
      */
@@ -604,6 +611,8 @@ class Handlers
         $tenantDB->prepare('UPDATE player SET is_disqualified = ?, updated_at = ? WHERE id = ?')
             ->executeStatement([true, $now, $playerID]);
 
+        // MEMO: 参加者を取得し存在しなければ例外を投げる
+        // ここ最初に処理すればよくね
         $p = $this->retrievePlayer($tenantDB, $playerID);
         if (is_null($p)) {
             // 存在しないプレイヤー
@@ -624,7 +633,7 @@ class Handlers
     }
 
     /**
-     * テナント管理者向けAPI
+     * 主催者向けAPI
      * POST /api/organizer/competitions/add
      * 大会を追加する
      */
@@ -656,7 +665,7 @@ class Handlers
     }
 
     /**
-     * テナント管理者向けAPI
+     * 主催者向けAPI
      * POST /api/organizer/competition/:competition_id/finish
      * 大会を終了する
      */
@@ -686,7 +695,7 @@ class Handlers
     }
 
     /**
-     * テナント管理者向けAPI
+     * 主催者向けAPI
      * POST /api/organizer/competition/:competition_id/score
      * 大会のスコアをCSVでアップロードする
      */
@@ -787,6 +796,7 @@ class Handlers
         $tenantDB->prepare('DELETE FROM player_score WHERE tenant_id = ? AND competition_id = ?')
             ->executeStatement([$v->tenantID, $competitionID]);
 
+        // MEMO: CSVの行を1行ごとインサートしてる
         foreach ($playerScoreRows as $ps) {
             $tenantDB->prepare('INSERT INTO player_score (id, tenant_id, player_id, competition_id, score, row_num, created_at, updated_at) VALUES (:id, :tenant_id, :player_id, :competition_id, :score, :row_num, :created_at, :updated_at)')
                 ->executeStatement($ps);
@@ -802,7 +812,7 @@ class Handlers
     }
 
     /**
-     * テナント管理者向けAPI
+     * 主催者向けAPI
      * GET /api/organizer/billing
      * テナント内の課金レポートを取得する
      */
@@ -825,6 +835,7 @@ class Handlers
         /** @var list<BillingReport> $tbrs */
         $tbrs = [];
         foreach ($cs as $comp) {
+            // MEMO: 大会ごとのスコアを計算する処理が重い（N+1)
             $tbrs[] = $this->billingReportByCompetition($tenantDB, $v->tenantID, $comp['id']);
         }
 
@@ -984,6 +995,7 @@ class Handlers
                 continue;
             }
             $scoredPlayerSet[$ps['player_id']] = null;
+            // MEMO: 1ユーザごとにSELECTして取得（N+1）
             $p = $this->retrievePlayer($tenantDB, $ps['player_id']);
 
             $ranks[] = new CompetitionRank(
@@ -1061,7 +1073,7 @@ class Handlers
     }
 
     /**
-     * テナント管理者向けAPI
+     * 主催者向けAPI
      * GET /api/organizer/competitions
      * 大会の一覧を取得する
      */
