@@ -1018,7 +1018,7 @@ class Handlers
         $fl = $this->flockByTenantID($v->tenantID);
 
         $pss = $tenantDB->prepare(
-            'SELECT ps.score AS score, ps.player_id AS player_id, p.display_name AS display_name FROM player_score ps INNER JOIN player p ON ps.player_id = p.id WHERE ps.competition_id = ? GROUP BY ps.player_id ORDER BY ps.score DESC')
+            'SELECT ps.score AS score, ps.player_id AS player_id, p.display_name AS display_name FROM player_score ps INNER JOIN player p ON ps.player_id = p.id WHERE ps.competition_id = ? GROUP BY ps.player_id ORDER BY ps.score DESC, ps.id ASC')
             ->executeQuery([$competitionID])
             ->fetchAllAssociative();
 
