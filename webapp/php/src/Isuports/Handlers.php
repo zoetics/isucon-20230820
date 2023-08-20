@@ -236,6 +236,43 @@ class Handlers
     }
 
     /**
+     * 複数の参加者を取得する
+     */
+    private function retrievePlayers(Connection $tenantDB, array $ids): ?PlayerRow
+    {
+        $idStr = '';
+        foreach ($ids as $id) {
+            $if($idStr === '') {
+                $idStr = $id;
+            }
+            $idStr = $idStr . ', ' . $id;
+        }
+
+        $rows = $tenantDB->prepare('SELECT * FROM player WHERE id in ?')
+            ->executeQuery([$idStr])
+            ->fetchAssociative();
+
+        $players = [];
+        foreach($rows as $row){
+            if ($row === false) {
+                $players[$row['id']] = null;
+                continue;
+            }
+
+            $players[$row['id']] = PlayerRow(
+                tenantID: $row['tenant_id'],
+                id: $row['id'],
+                displayName: $row['display_name'],
+                isDisqualified: (bool)$row['is_disqualified'],
+                createdAt: $row['created_at'],
+                updatedAt: $row['updated_at'],
+            );
+        }
+
+        return $players;
+    }
+
+    /**
      * 参加者を認可する
      * 参加者向けAPIで呼ばれる
      */
@@ -988,6 +1025,8 @@ class Handlers
         $ranks = [];
         /** @var array<string, null> $scoredPlayerSet */
         $scoredPlayerSet = [];
+        $playerIds = array_column($pss, 'player_id');
+        $players = $this->retrievePlayers($playerIds);
         foreach ($pss as $ps) {
             // player_scoreが同一player_id内ではrow_numの降順でソートされているので
             // 現れたのが2回目以降のplayer_idはより大きいrow_numでスコアが出ているとみなせる
@@ -995,8 +1034,7 @@ class Handlers
                 continue;
             }
             $scoredPlayerSet[$ps['player_id']] = null;
-            // MEMO: 1ユーザごとにSELECTして取得（N+1）
-            $p = $this->retrievePlayer($tenantDB, $ps['player_id']);
+            $p = $players[$ps['player_id']];
 
             $ranks[] = new CompetitionRank(
                 score: $ps['score'],
