@@ -58,13 +58,7 @@ class Handlers
      */
     private function connectToTenantDB(int $id): Connection
     {
-        return DriverManager::getConnection(
-            params: [
-                'path' => $this->tenantDBPath($id),
-                'driver' => 'pdo_sqlite',
-            ],
-            config: $this->sqliteConfiguration,
-        );
+        return $this->adminDB;
     }
 
     /**
